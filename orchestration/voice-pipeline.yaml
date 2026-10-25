@@ -1,0 +1,107 @@
+# JARVIS Voice Pipeline Orchestration
+# Defines the complete voice processing pipeline from STT to TTS
+
+pipeline:
+  name: "jarvis-voice-pipeline"
+  version: "1.0.0"
+  description: "End-to-end voice processing pipeline for JARVIS assistant"
+
+stages:
+  # Stage 1: Speech-to-Text
+  - name: "stt"
+    type: "speech-to-text"
+    config:
+      provider: "${VOICE_STT_PROVIDER:-browser}"
+      server_asr_enabled: "${VOICE_ASR_ENABLED:-true}"
+      model: "${VOICE_ASR_MODEL:-nvidia/parakeet-rnnt-1.1b}"
+      base_url: "${VOICE_ASR_BASE_URL:-http://localhost:8789}"
+      sample_rate: 16000
+      vad:
+        threshold: 0.01
+        silence_ms: 500
+        warmup_ms: 150
+
+  # Stage 2: Intent Detection & Tool Selection
+  - name: "intent"
+    type: "intent-detection"
+    config:
+      use_full_catalog: true
+      always_available_tools:
+        - "web.search"
+        - "memory.search"
+        - "file.io"
+        - "shell.exec"
+        - "computer.use"
+        - "code.execute_interpreter"
+        - "code.compile_and_run"
+        - "local.rag"
+        - "document.read"
+        - "document.write"
+        - "task.create"
+        - "task.list"
+      fast_turns: true
+
+  # Stage 3: Agent Runtime (Tool Execution)
+  - name: "agent-runtime"
+    type: "agent-runtime"
+    config:
+      max_iterations: 6
+      max_tool_calls: 8
+      max_duration_ms: 120000
+      auto_approve: true
+      full_catalog: true
+      disable_thinking_on_voice: true
+
+  # Stage 4: Text-to-Speech
+  - name: "tts"
+    type: "text-to-speech"
+    config:
+      engine: "${VOICE_TTS_ENGINE:-kokoro}"
+      kokoro_url: "${VOICE_TTS_KOKORO_URL:-http://127.0.0.1:8788}"
+      kokoro_voice: "${VOICE_TTS_KOKORO_VOICE:-em_alex}"
+      fallback_voice: "${VOICE_TTS_SAY_VOICE:-Jorge}"
+      max_sentence_chars: 160
+      max_pending_chars: 80
+      max_concurrent: 4
+      phrase_bank_enabled: true
+      phrase_bank_dir: ".voice-bank"
+
+  # Stage 5: Audio Streaming & Playback
+  - name: "audio-playback"
+    type: "audio-streaming"
+    config:
+      grace_period_ms: 800
+      autoplay_unlock: true
+      interruption_handling: true
+      fallback_to_browser_tts: true
+
+  # Stage 6: Fallback Handling
+  - name: "fallback"
+    type: "fallback-handler"
+    config:
+      kokoro_fallback: "macos-say"
+      say_fallback: "browser-speech"
+      cache_phrases: true
+
+# Monitoring & Metrics
+monitoring:
+  metrics:
+    - "ttfa"           # Time to first audio
+    - "turn.duration"  # Total turn duration
+    - "tool.duration"  # Tool execution time
+    - "provider.failovers"
+  health_checks:
+    - endpoint: "/api/voice"
+      interval: 30000
+    - endpoint: "/api/capabilities"
+      interval: 60000
+
+# Error Handling
+error_handling:
+  retry_policy:
+    max_retries: 3
+    backoff_ms: 1000
+  circuit_breaker:
+    enabled: true
+    threshold: 5
+    timeout_ms: 30000

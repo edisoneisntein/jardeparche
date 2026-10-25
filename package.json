@@ -1,0 +1,50 @@
+{
+  "name": "jarvis",
+  "version": "0.1.0",
+  "private": true,
+  "description": "JARVIS \u2014 personal AI intelligence service (NVIDIA NIM brain, real agent runtime, persistent memory, voice, perception, HUD).",
+  "type": "module",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "packageManager": "pnpm@12.10.1",
+  "scripts": {
+    "build:packages": "pnpm -r --workspace-concurrency=1 --filter './packages/**' build",
+    "build": "pnpm build:packages && pnpm -r --workspace-concurrency=1 --filter './apps/**' build",
+    "typecheck": "pnpm build:packages && pnpm -r --workspace-concurrency=1 typecheck",
+    "dev": "concurrently -n server,web,voice -c cyan,magenta,yellow \"pnpm --filter @jarvis/server dev\" \"pnpm --filter @jarvis/web dev\" \"pnpm voice:server\"",
+    "dev:https": "node scripts/dev-https.mjs",
+    "sandbox:build": "node scripts/sandbox-build.mjs",
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "test:watch": "vitest",
+    "lint": "pnpm build:packages && pnpm -r --workspace-concurrency=1 lint",
+    "db:migrate": "pnpm --filter @jarvis/server db:migrate",
+    "voice:latency": "pnpm --filter @jarvis/server exec tsx ../../scripts/voice-latency.ts",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "verify": "pnpm typecheck && pnpm test:unit",
+    "voice:server": ".venv-voice/bin/python scripts/kokoro-voice-server.py --puerto 8788",
+    "voice:bank": "pnpm --filter @jarvis/server exec tsx ../../scripts/voice-bank.ts",
+    "ui:sensei": "python3 scripts/ui-sensei/segment.py",
+    "code-review": "node scripts/code-review.mjs",
+    "orchestrate": "node scripts/run-orchestration.mjs",
+    "demo:computer": "node scripts/demo-computer-use.mjs",
+    "scan-skills": "node scripts/scan-skills.mjs",
+    "prototype": "node scripts/prototype-aistudio.mjs",
+    "docs:validate": "tsx scripts/doc-gen/validate-docs.ts",
+    "docs:generate-tool-catalog": "tsx scripts/doc-gen/generate-tool-catalog.ts",
+    "docs:generate-api-contracts": "tsx scripts/doc-gen/generate-api-contracts.ts",
+    "docs:check-adrs": "tsx scripts/doc-gen/check-adrs.ts",
+    "docs:sync-env": "tsx scripts/doc-gen/sync-env-docs.ts",
+    "docs:validate-db-schema": "tsx scripts/doc-gen/validate-db-schema.ts",
+    "docs:all": "pnpm run docs:generate-tool-catalog && pnpm run docs:generate-api-contracts && pnpm run docs:validate"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "concurrently": "^9.1.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

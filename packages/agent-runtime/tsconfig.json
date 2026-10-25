@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    // Este paquete usa globales de Node (AbortController, crypto.randomUUID).
+    // Sin esto, el editor no los resuelve: `lib` no incluye DOM y pnpm no
+    // propaga @types/node entre paquetes.
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}

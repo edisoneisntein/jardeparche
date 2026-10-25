@@ -1,0 +1,25 @@
+node_modules/
+dist/
+build/
+coverage/
+.env
+.env.local
+*.log
+.DS_Store
+.turbo/
+apps/web/dist/
+apps/web/.vite/
+packages/*/dist/
+*.tsbuildinfo
+.pgdata/
+
+# certificados locales generados por mkcert (`pnpm dev:https`)
+.certs/
+
+# assets de audio locales (no versionar): música con derechos del usuario
+apps/web/public/assets/jarvis/intro.mp3
+
+# voz local: modelo Kokoro, su venv y el banco de frases clonadas
+.venv-voice/
+.voice-models/
+.voice-bank/

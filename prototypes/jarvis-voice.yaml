@@ -1,0 +1,298 @@
+# JARVIS Voice Prototype for AI Studio
+prototype:
+  name: "jarvis-voice-prototype"
+  version: "1.0.0"
+  description: "Prototype configuration for JARVIS voice assistant prompts and tools"
+
+system_prompt: |
+  # IDENTIDAD Y MISIÓN
+  Eres JARVIS, un asistente personal conversacional diseñado para ayudar al usuario a pensar, investigar, crear, programar, resolver problemas y ejecutar tareas mediante las herramientas realmente disponibles.
+  Tu misión es maximizar la utilidad, la precisión, la seguridad y el tiempo que ahorras al usuario.
+
+  # 1. COMPRENSIÓN E INTENCIÓN
+  Identifica el objetivo real del usuario antes de responder. Actúa directamente cuando la petición sea clara.
+
+  # 2. COMUNICACIÓN Y ESTILO
+  Responde en el idioma del usuario (español por defecto). Natural, directo, profesional.
+
+  # 3. VERACIDAD Y CALIBRACIÓN
+  No inventes información. Verifica resultados antes de declarar tareas terminadas.
+
+  # 4. USO DE HERRAMIENTAS
+  Usa activamente las herramientas pertinentes. Encadena cuando sea necesario.
+
+  # 5. MEMORIA Y CONTEXTO
+  Aprovecha memory.search/upsert. Mantén coherencia en tareas multi-paso.
+
+  # 6. SEGURIDAD Y PRIVACIDAD
+  No ejecutes código no verificado. Pide confirmación para acciones irreversibles.
+
+  # 7. RAZONAMIENTO Y RESOLUCIÓN
+  Analiza con profundidad proporcional. Compara alternativas. Prueba código cuando sea posible.
+
+  # 8. PROGRAMACIÓN Y TRABAJO TÉCNICO
+  Busca corrección, legibilidad, mantenibilidad. No afirmes que compila sin evidencia.
+
+  # 9. RESPUESTA FINAL
+  Entrega resultado útil primero. Éxito = utilidad real + fidelidad a hechos.
+
+tools:
+  - name: "time.now"
+    description: "Obtiene la fecha y hora actual del sistema"
+    parameters:
+      type: "object"
+      properties:
+        timezone:
+          type: "string"
+      required: []
+
+  - name: "system.info"
+    description: "Obtiene información del sistema (CPU, memoria, disco, uptime)"
+    parameters:
+      type: "object"
+      properties: {}
+      required: []
+
+  - name: "math.calculate"
+    description: "Evalúa una expresión matemática"
+    parameters:
+      type: "object"
+      properties:
+        expression:
+          type: "string"
+      required: ["expression"]
+
+  - name: "task.create"
+    description: "Crea una nueva tarea"
+    parameters:
+      type: "object"
+      properties:
+        title:
+          type: "string"
+        notes:
+          type: "string"
+        due_at:
+          type: "string"
+          format: "date-time"
+      required: ["title"]
+
+  - name: "task.list"
+    description: "Lista las tareas del usuario"
+    parameters:
+      type: "object"
+      properties:
+        status:
+          type: "string"
+          enum: ["pending", "completed", "cancelled"]
+      required: []
+
+  - name: "memory.search"
+    description: "Busca en la memoria a largo plazo"
+    parameters:
+      type: "object"
+      properties:
+        query:
+          type: "string"
+        limit:
+          type: "integer"
+          default: 5
+      required: ["query"]
+
+  - name: "memory.upsert"
+    description: "Guarda o actualiza un hecho en memoria"
+    parameters:
+      type: "object"
+      properties:
+        content:
+          type: "string"
+        tags:
+          type: "array"
+          items:
+            type: "string"
+      required: ["content"]
+
+  - name: "web.search"
+    description: "Busca en la web"
+    parameters:
+      type: "object"
+      properties:
+        query:
+          type: "string"
+        max_results:
+          type: "integer"
+          default: 5
+      required: ["query"]
+
+  - name: "document.read"
+    description: "Lee el contenido de un documento"
+    parameters:
+      type: "object"
+      properties:
+        path:
+          type: "string"
+      required: ["path"]
+
+  - name: "document.write"
+    description: "Escribe contenido en un documento"
+    parameters:
+      type: "object"
+      properties:
+        path:
+          type: "string"
+        content:
+          type: "string"
+      required: ["path", "content"]
+
+  - name: "local.rag"
+    description: "Consulta el índice RAG local"
+    parameters:
+      type: "object"
+      properties:
+        query:
+          type: "string"
+        top_k:
+          type: "integer"
+          default: 5
+      required: ["query"]
+
+  - name: "file.io"
+    description: "Lee o escribe archivos en el workspace"
+    parameters:
+      type: "object"
+      properties:
+        operation:
+          type: "string"
+          enum: ["read", "write", "list", "delete"]
+        path:
+          type: "string"
+        content:
+          type: "string"
+      required: ["operation", "path"]
+
+  - name: "shell.exec"
+    description: "Ejecuta un comando en el shell"
+    parameters:
+      type: "object"
+      properties:
+        command:
+          type: "string"
+        args:
+          type: "array"
+          items:
+            type: "string"
+        cwd:
+          type: "string"
+      required: ["command"]
+
+  - name: "computer.use"
+    description: "Controla el escritorio (click, type, screenshot, OCR)"
+    parameters:
+      type: "object"
+      properties:
+        action:
+          type: "string"
+          enum: ["click", "type", "screenshot", "ocr", "scroll", "keypress"]
+        x:
+          type: "integer"
+        y:
+          type: "integer"
+        text:
+          type: "string"
+        key:
+          type: "string"
+      required: ["action"]
+
+  - name: "web.fetch"
+    description: "Obtiene el contenido de una URL"
+    parameters:
+      type: "object"
+      properties:
+        url:
+          type: "string"
+        format:
+          type: "string"
+          enum: ["text", "html", "json"]
+          default: "text"
+      required: ["url"]
+
+  - name: "code.execute_interpreter"
+    description: "Ejecuta código en sandbox (Python, Node.js)"
+    parameters:
+      type: "object"
+      properties:
+        language:
+          type: "string"
+          enum: ["python", "javascript", "typescript"]
+        code:
+          type: "string"
+        timeout_ms:
+          type: "integer"
+          default: 30000
+      required: ["language", "code"]
+
+  - name: "code.compile_and_run"
+    description: "Compila y ejecuta código (Rust, Go, C++)"
+    parameters:
+      type: "object"
+      properties:
+        language:
+          type: "string"
+          enum: ["rust", "go", "cpp", "c"]
+        code:
+          type: "string"
+        timeout_ms:
+          type: "integer"
+          default: 60000
+      required: ["language", "code"]
+
+models:
+  - provider: "nvidia-nim"
+    model: "nvidia/nemotron-3-ultra"
+    temperature: 0.7
+    max_tokens: 4096
+  - provider: "nvidia-nim"
+    model: "nvidia/nemotron-3.5-super-vl-120b-a12b"
+    temperature: 0.7
+    max_tokens: 4096
+  - provider: "openrouter"
+    model: "openai/gpt-4o"
+    temperature: 0.7
+    max_tokens: 4096
+  - provider: "openrouter"
+    model: "anthropic/claude-3.5-sonnet"
+    temperature: 0.7
+    max_tokens: 4096
+
+test_scenarios:
+  - name: "Simple Query"
+    user_input: "¿Qué hora es en Madrid?"
+    expected_tools: ["time.now"]
+  - name: "Calculation"
+    user_input: "Calcula el 15% de 2340"
+    expected_tools: ["math.calculate"]
+  - name: "Web Search"
+    user_input: "Busca las últimas noticias sobre IA"
+    expected_tools: ["web.search"]
+  - name: "Memory Recall"
+    user_input: "¿Qué me dijiste ayer sobre mi proyecto?"
+    expected_tools: ["memory.search"]
+  - name: "File Operation"
+    user_input: "Crea un archivo notas.txt con el texto 'Hola JARVIS'"
+    expected_tools: ["file.io"]
+  - name: "Code Execution"
+    user_input: "Ejecuta este Python: print(sum(range(100)))"
+    expected_tools: ["code.execute_interpreter"]
+  - name: "Complex Multi-tool"
+    user_input: "Busca info sobre Rust, guárdala en memoria y crea una tarea para aprenderlo"
+    expected_tools: ["web.search", "memory.upsert", "task.create"]
+  - name: "Desktop Automation"
+    user_input: "Abre la calculadora y haz 2+2"
+    expected_tools: ["computer.use"]
+
+voice_config:
+  tts_engine: "kokoro"
+  kokoro_voice: "em_alex"
+  max_sentence_chars: 160
+  max_pending_chars: 80
+  grace_period_ms: 800
+  fallback_voice: "Jorge"

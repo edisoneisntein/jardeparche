@@ -1,0 +1,76 @@
+name: jarvis
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: jarvis-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: jarvis
+      POSTGRES_PASSWORD: jarvis
+      POSTGRES_DB: jarvis
+    ports:
+      - "55432:5432"
+    volumes:
+      - jarvis_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jarvis -d jarvis"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  server:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: infra/docker/server.Dockerfile
+    image: jarvis-server:local
+    container_name: jarvis-server
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "8787"
+      PERSISTENCE: ${PERSISTENCE:-postgres}
+      DATABASE_URL: postgres://jarvis:jarvis@db:5432/jarvis
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      NVIDIA_BASE_URL: ${NVIDIA_BASE_URL:-https://integrate.api.nvidia.com/v1}
+      NVIDIA_MODEL: ${NVIDIA_MODEL:-nvidia/nemotron-3.5-lightning-30b-a3b}
+      NVIDIA_VISION_MODEL: ${NVIDIA_VISION_MODEL:-nvidia/nemotron-3.5-super-vl-120b-a12b}
+      NVIDIA_EMBEDDING_MODEL: ${NVIDIA_EMBEDDING_MODEL:-nvidia/nemotron-3-embed-1b}
+      NVIDIA_STREAMING: ${NVIDIA_STREAMING:-auto}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      JARVIS_ACCESS_TOKEN: ${JARVIS_ACCESS_TOKEN:-}
+      JARVIS_USERS: ${JARVIS_USERS:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      MEMORY_RETENTION_DAYS: ${MEMORY_RETENTION_DAYS:-0}
+      DOCUMENTS_ROOT: ${DOCUMENTS_ROOT:-}
+      WEB_SEARCH_PROVIDER: ${WEB_SEARCH_PROVIDER:-}
+      WEB_SEARCH_API_KEY: ${WEB_SEARCH_API_KEY:-}
+    ports:
+      - "8787:8787"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: infra/docker/web.Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8787}
+    image: jarvis-web:local
+    container_name: jarvis-web
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      db:
+        condition: service_healthy
+      server:
+        condition: service_started
+
+volumes:
+  jarvis_pgdata:
