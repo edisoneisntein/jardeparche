@@ -532,15 +532,22 @@ async function buildTtsEngine(
 }
 
 /**
- * Cadena de proveedores. El primario es NVIDIA NIM; si falla por una causa de
- * proveedor (red, timeout, 5xx, rate limit, credenciales), el turno se
- * reintenta con el siguiente de la lista. Si no hay respaldo configurado, se
- * comporta exactamente como antes (un solo proveedor).
+ * Cadena de proveedores. El primario es GEMINI; si falla, NVIDIA NIM; si falla, OpenRouter.
  */
 function createProvider(log: Logger, metrics: Metrics): { provider: AiProvider; providerNote: string } {
   const chain: AiProvider[] = [];
   const notes: string[] = [];
 
+  // 1. GEMINI (proveedor principal)
+  try {
+    const gemini = new GeminiProvider(loadGeminiConfig());
+    chain.push(gemini);
+    notes.push(`gemini (${gemini.models.chat})`);
+  } catch (error) {
+    notes.push(`gemini no disponible: ${(error as Error).message}`);
+  }
+
+  // 2. NVIDIA NIM (respaldo 1)
   try {
     const nvidia = new NvidiaNimProvider(loadNvidiaConfig());
     chain.push(nvidia);
@@ -549,6 +556,7 @@ function createProvider(log: Logger, metrics: Metrics): { provider: AiProvider; 
     notes.push(`nvidia-nim no disponible: ${(error as Error).message}`);
   }
 
+  // 3. OpenRouter (respaldo 2)
   const openRouterConfig = loadOpenRouterConfig();
   if (openRouterConfig) {
     chain.push(new OpenRouterProvider(openRouterConfig));

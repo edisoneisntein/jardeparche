@@ -57,7 +57,6 @@ function blockServerSecrets() {
 }
 
 export default defineConfig({
-  plugins: [react()],
   /**
    * SEC-001 · Aislamiento del entorno en el bundle del navegador.
    *
