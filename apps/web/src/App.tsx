@@ -10,8 +10,6 @@ import { usePrefersReducedMotion } from "./hooks/useReducedMotion";
 import { useAgentVisualState } from "./hooks/useAgentVisualState";
 import type { AgentState } from "./lib/events";
 import { Header } from "./components/hud/Header";
-import { VoiceVisualizer } from "./components/voice/VoiceVisualizer";
-import { VoiceEqualizer } from "./components/voice/VoiceEqualizer";
 import { VoiceGateNotice } from "./components/hud/VoiceGateNotice";
 import { Conversation } from "./components/hud/Conversation";
 import { useParallax } from "./hooks/useParallax";
@@ -23,18 +21,13 @@ import { ApprovalModal } from "./components/hud/ApprovalModal";
 import { SettingsPanel } from "./components/hud/SettingsPanel";
 import { BootScreen } from "./components/hud/BootScreen";
 import { IntroSequence } from "./components/hud/IntroSequence";
-import { HoloPanels, ReticleLayer } from "./components/fx/HoloDeck";
-import { Anillo1 } from "./components/reactor/Anillo1";
-import { Anillo2 } from "./components/reactor/Anillo2";
-import { Anillo3 } from "./components/reactor/Anillo3";
-import { NucleoParticulas } from "./components/reactor/NucleoParticulas";
-import { NucleoDescarga } from "./components/reactor/NucleoDescarga";
-import { Anillo4 } from "./components/reactor/Anillo4";
+import { HoloPanels } from "./components/fx/HoloDeck";
 import { ParticleVeil } from "./components/fx/ParticleVeil";
 import { ScanOverlay } from "./components/fx/ScanOverlay";
 import { HolographicDiagnostics } from "./components/fx/HolographicDiagnostics";
 import { HudDock } from "./components/hud/HudDock";
 import { PulseIcon, ToolsIcon, ActivityIcon, CameraIcon } from "./components/hud/icons";
+import { ArcReactorContainer } from "./components/reactor/ArcReactorContainer";
 import { attachAudioUnlockGesture } from "./lib/serverAudio";
 
 /**
@@ -314,54 +307,27 @@ export function App() {
 
       <main className="hud-grid">
         <section className="reactor-column" aria-label="Núcleo">
-          <div className="reactor-stack">
-            <div className="nucleo-bloque" data-asentado={asentado ? "true" : "false"}>
-              <Anillo2 state={agentState} reducedMotion={reducedMotion} />
-              <Anillo3 state={agentState} reducedMotion={reducedMotion} micLevel={dictation.micLevel} />
-              <Anillo4 state={agentState} reducedMotion={reducedMotion} color={COLOR_PARTICULAS} />
-            </div>
-            <NucleoParticulas
-              state={agentState}
-              color={COLOR_PARTICULAS}
-              micLevel={dictation.micLevel}
-              voz={ttsSpeaking}
-              reducedMotion={reducedMotion}
-            />
-            <NucleoDescarga state={agentState} reducedMotion={reducedMotion} />
-            <Anillo1 state={agentState} reducedMotion={reducedMotion} />
-            <ReticleLayer state={agentState} reducedMotion={reducedMotion} />
-            <VoiceVisualizer
-              active={voiceActive}
-              speaking={ttsSpeaking}
-              state={agentState}
-              color={visual.color}
-              reducedMotion={reducedMotion}
-            />
-          </div>
-
-          {/* La "boca" de la máscara: se enciende con tu voz o con la voz
-              sintetizada de JARVIS. */}
+          <ArcReactorContainer
+            state={agentState}
+            reducedMotion={reducedMotion}
+            micLevel={dictation.micLevel}
+            ttsSpeaking={ttsSpeaking}
+            color={visual.color}
+            particleColor={COLOR_PARTICULAS}
+          />
           <VoiceEqualizer
-            active={voiceActive}
+            active={dictation.micLevel > 0.01}
             speaking={ttsSpeaking}
             color={COLOR_VOZ}
             reducedMotion={reducedMotion}
           />
-
-          <p className="voice-caption" data-active={voiceActive ? "true" : "false"}>
-            {voiceActive
+          <p className="voice-caption" data-active={dictation.micLevel > 0.01 ? "true" : "false"}>
+            {dictation.micLevel > 0.01
               ? "espectro del micrófono · en vivo"
               : ttsSpeaking
                 ? "salida de voz · envolvente real de la síntesis"
                 : "anillo en reposo · activa el micrófono para ver tu voz"}
           </p>
-
-          <div className="reactor-caption">
-            <h2>NÚCLEO ARC</h2>
-            <p>
-              El núcleo refleja el estado real del agente. Si dice EN ESPERA, no hay ninguna tarea en curso.
-            </p>
-          </div>
           <dl className="status-rail">
             <div>
               <dt>Tarea</dt>
