@@ -3,6 +3,7 @@ export * from "./errors.js";
 export * from "./types.js";
 export * from "./nim-provider.js";
 export * from "./openrouter-provider.js";
+export * from "./gemini-provider.js";
 export * from "./failover-provider.js";
 export * from "./resilient-router.js";
 export * from "./fake-provider.js";
